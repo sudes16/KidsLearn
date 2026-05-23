@@ -1,0 +1,6 @@
+{
+  "name": "Alphabet Match & Trace",
+  "description": "Learn small and capital letter pairs with tracing and animal games",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
