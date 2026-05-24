@@ -379,4 +379,121 @@ object LetterTemplates {
             )
         )
     )
+
+    val numberList: List<LetterItem> = listOf(
+        LetterItem(
+            char = '0', name = "Nebula Zero", animalName = "Infinity Black Hole", animalEmoji = "🌌",
+            animalFact = "A cosmic wormhole that loops forever, swallowing old stars and birthing newborn supernovas!", themeColor = 0xFF8338EC,
+            uppercaseStrokes = listOf(
+                Stroke(arc(0.5f, 0.5f, 0.22f, 0.32f, -90f, 360f, count = 18))
+            ),
+            lowercaseStrokes = listOf(
+                Stroke(arc(0.5f, 0.5f, 0.22f, 0.32f, -90f, 360f, count = 18))
+            )
+        ),
+        LetterItem(
+            char = '1', name = "Laser One", animalName = "Galactic Rocket", animalEmoji = "🚀",
+            animalFact = "A hyper-speed star-cruiser that launches perpendicular to the galactic plane!", themeColor = 0xFF3A86C8,
+            uppercaseStrokes = listOf(
+                Stroke(line(0.38f, 0.25f, 0.5f, 0.15f) + line(0.5f, 0.15f, 0.5f, 0.85f)),
+                Stroke(line(0.32f, 0.85f, 0.68f, 0.85f))
+            ),
+            lowercaseStrokes = listOf(
+                Stroke(line(0.38f, 0.25f, 0.5f, 0.15f) + line(0.5f, 0.15f, 0.5f, 0.85f)),
+                Stroke(line(0.32f, 0.85f, 0.68f, 0.85f))
+            )
+        ),
+        LetterItem(
+            char = '2', name = "Cosmic Two", animalName = "Cyber Swan-Dragon", animalEmoji = "🐉",
+            animalFact = "Glows with the power of twin binary stars, orbiting safely in the Sagittarius Arm!", themeColor = 0xFFFB5607,
+            uppercaseStrokes = listOf(
+                Stroke(arc(0.48f, 0.32f, 0.22f, 0.18f, -180f, 200f) + line(0.68f, 0.42f, 0.28f, 0.85f)),
+                Stroke(line(0.28f, 0.85f, 0.72f, 0.85f))
+            ),
+            lowercaseStrokes = listOf(
+                Stroke(arc(0.48f, 0.32f, 0.22f, 0.18f, -180f, 200f) + line(0.68f, 0.42f, 0.28f, 0.85f)),
+                Stroke(line(0.28f, 0.85f, 0.72f, 0.85f))
+            )
+        ),
+        LetterItem(
+            char = '3', name = "Warp Three", animalName = "Alien UFO Butterfly", animalEmoji = "🛸",
+            animalFact = "Traces a path through 3 dimensional warping hyper-jump points in deep space!", themeColor = 0xFF2A9D8F,
+            uppercaseStrokes = listOf(
+                Stroke(arc(0.5f, 0.35f, 0.22f, 0.18f, -90f, 210f, count = 10) + arc(0.5f, 0.65f, 0.25f, 0.20f, -90f, 210f, count = 10))
+            ),
+            lowercaseStrokes = listOf(
+                Stroke(arc(0.5f, 0.35f, 0.22f, 0.18f, -90f, 210f, count = 10) + arc(0.5f, 0.65f, 0.25f, 0.20f, -90f, 210f, count = 10))
+            )
+        ),
+        LetterItem(
+            char = '4', name = "Spark Four", animalName = "Hyper Charge Robot", animalEmoji = "🤖",
+            animalFact = "A cute android companion that uses its four laser antennas to chat with satellites!", themeColor = 0xFFF77F00,
+            uppercaseStrokes = listOf(
+                Stroke(line(0.55f, 0.15f, 0.25f, 0.62f) + line(0.25f, 0.62f, 0.75f, 0.62f)),
+                Stroke(line(0.58f, 0.35f, 0.58f, 0.85f))
+            ),
+            lowercaseStrokes = listOf(
+                Stroke(line(0.55f, 0.15f, 0.25f, 0.62f) + line(0.25f, 0.62f, 0.75f, 0.62f)),
+                Stroke(line(0.58f, 0.35f, 0.58f, 0.85f))
+            )
+        ),
+        LetterItem(
+            char = '5', name = "Stellar Five", animalName = "Cosmic Pegasus", animalEmoji = "🦄",
+            animalFact = "A magical flying celestial horse whose five horn crystals glow in beautiful rainbow hues!", themeColor = 0xFFFF006E,
+            uppercaseStrokes = listOf(
+                Stroke(line(0.35f, 0.18f, 0.35f, 0.45f) + arc(0.48f, 0.62f, 0.22f, 0.2f, -90f, 210f, count = 12)),
+                Stroke(line(0.35f, 0.18f, 0.68f, 0.18f))
+            ),
+            lowercaseStrokes = listOf(
+                Stroke(line(0.35f, 0.18f, 0.35f, 0.45f) + arc(0.48f, 0.62f, 0.22f, 0.2f, -90f, 210f, count = 12)),
+                Stroke(line(0.35f, 0.18f, 0.68f, 0.18f))
+            )
+        ),
+        LetterItem(
+            char = '6', name = "Cyclone Six", animalName = "Multidimensional Vortex", animalEmoji = "🌀",
+            animalFact = "A swirl of stardust spinning 6 times faster than a pulsar star!", themeColor = 0xFF00B4D8,
+            uppercaseStrokes = listOf(
+                Stroke(line(0.62f, 0.18f, 0.35f, 0.5f) + arc(0.5f, 0.65f, 0.2f, 0.2f, 0f, 360f, count = 14))
+            ),
+            lowercaseStrokes = listOf(
+                Stroke(line(0.62f, 0.18f, 0.35f, 0.5f) + arc(0.5f, 0.65f, 0.2f, 0.2f, 0f, 360f, count = 14))
+            )
+        ),
+        LetterItem(
+            char = '7', name = "Bolt Seven", animalName = "Quantum Chrono-Boomerang", animalEmoji = "⚡",
+            animalFact = "A stellar boomerang carrying golden lightning bolts across 7 dimensions!", themeColor = 0xFFFFB703,
+            uppercaseStrokes = listOf(
+                Stroke(line(0.28f, 0.18f, 0.72f, 0.18f)),
+                Stroke(line(0.72f, 0.18f, 0.38f, 0.85f))
+            ),
+            lowercaseStrokes = listOf(
+                Stroke(line(0.28f, 0.18f, 0.72f, 0.18f)),
+                Stroke(line(0.72f, 0.18f, 0.38f, 0.85f))
+            )
+        ),
+        LetterItem(
+            char = '8', name = "Epoch Eight", animalName = "Infinity Warp Gate", animalEmoji = "♾️",
+            animalFact = "A loop of infinite possibility allowing instant travel across millions of light-years!", themeColor = 0xFFE76F51,
+            uppercaseStrokes = listOf(
+                Stroke(arc(0.5f, 0.33f, 0.18f, 0.18f, 0f, 360f, count = 12)),
+                Stroke(arc(0.5f, 0.67f, 0.22f, 0.22f, 0f, -360f, count = 12))
+            ),
+            lowercaseStrokes = listOf(
+                Stroke(arc(0.5f, 0.33f, 0.18f, 0.18f, 0f, 360f, count = 12)),
+                Stroke(arc(0.5f, 0.67f, 0.22f, 0.22f, 0f, -360f, count = 12))
+            )
+        ),
+        LetterItem(
+            char = '9', name = "Astro Nine", animalName = "Space Balloon Octopus", animalEmoji = "🐙",
+            animalFact = "A floaty alien octopus with 9 jelly tentacles that plays cosmic harp melodies on starbeams!", themeColor = 0xFFD81159,
+            uppercaseStrokes = listOf(
+                Stroke(arc(0.5f, 0.35f, 0.2f, 0.2f, 0f, -360f, count = 12)),
+                Stroke(line(0.7f, 0.35f, 0.7f, 0.85f))
+            ),
+            lowercaseStrokes = listOf(
+                Stroke(arc(0.5f, 0.35f, 0.2f, 0.2f, 0f, -360f, count = 12)),
+                Stroke(line(0.7f, 0.35f, 0.7f, 0.85f))
+            )
+        )
+    )
 }

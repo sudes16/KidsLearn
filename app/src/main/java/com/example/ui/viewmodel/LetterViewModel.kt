@@ -45,6 +45,9 @@ class LetterViewModel(application: Application) : AndroidViewModel(application) 
     private val _isUppercaseMode = MutableStateFlow(true)
     val isUppercaseMode: StateFlow<Boolean> = _isUppercaseMode.asStateFlow()
 
+    private val _isNumbersMode = MutableStateFlow(false)
+    val isNumbersMode: StateFlow<Boolean> = _isNumbersMode.asStateFlow()
+
     // Interactive Tracing progress
     private val _currentStrokeIndex = MutableStateFlow(0)
     val currentStrokeIndex: StateFlow<Int> = _currentStrokeIndex.asStateFlow()
@@ -110,6 +113,12 @@ class LetterViewModel(application: Application) : AndroidViewModel(application) 
 
     fun toggleUppercaseMode(upper: Boolean) {
         _isUppercaseMode.value = upper
+        resetTracing()
+    }
+
+    fun toggleNumbersMode(enabled: Boolean) {
+        _isNumbersMode.value = enabled
+        _selectedLetter.value = if (enabled) LetterTemplates.numberList[0] else LetterTemplates.list[0]
         resetTracing()
     }
 
@@ -183,11 +192,12 @@ class LetterViewModel(application: Application) : AndroidViewModel(application) 
     private fun saveTracingProgress() {
         val letterStr = _selectedLetter.value.char.toString()
         val isUpper = _isUppercaseMode.value
+        val isNumMode = _isNumbersMode.value
         viewModelScope.launch {
             val existing = repository.getProgressForLetter(letterStr)
             val newProgress = if (existing != null) {
-                val upTraced = if (isUpper) true else existing.uppercaseTraced
-                val lowTraced = if (!isUpper) true else existing.lowercaseTraced
+                val upTraced = if (isNumMode || isUpper) true else existing.uppercaseTraced
+                val lowTraced = if (isNumMode || !isUpper) true else existing.lowercaseTraced
                 // Stars logic: 1 star if upper, 1 if lower, 3 stars if BOTH are mastered!
                 val totalStars = if (upTraced && lowTraced) 3 else 1
                 existing.copy(
@@ -198,9 +208,9 @@ class LetterViewModel(application: Application) : AndroidViewModel(application) 
             } else {
                 LetterProgress(
                     letter = letterStr,
-                    uppercaseTraced = isUpper,
-                    lowercaseTraced = !isUpper,
-                    stars = 1
+                    uppercaseTraced = isNumMode || isUpper,
+                    lowercaseTraced = isNumMode || !isUpper,
+                    stars = if (isNumMode) 3 else 1
                 )
             }
             repository.updateProgress(newProgress)

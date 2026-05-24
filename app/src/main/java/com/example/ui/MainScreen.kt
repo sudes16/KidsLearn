@@ -209,11 +209,14 @@ fun TraceTabContent(
 ) {
     val selectedLetter by viewModel.selectedLetter.collectAsState()
     val isUppercaseMode by viewModel.isUppercaseMode.collectAsState()
+    val isNumbersMode by viewModel.isNumbersMode.collectAsState()
     val traceCompleted by viewModel.traceCompleted.collectAsState()
     val showConfetti by viewModel.showConfetti.collectAsState()
 
     val currentProgress = progressMap[selectedLetter.char.toString()]
     val starsCount = currentProgress?.stars ?: 0
+
+    val activeList = if (isNumbersMode) LetterTemplates.numberList else LetterTemplates.list
 
     Column(
         modifier = Modifier
@@ -221,15 +224,61 @@ fun TraceTabContent(
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Horizontal letters slider
+        // Futuristic Segmented Category Selector
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(com.example.ui.theme.GeoTertiary)
+                .border(1.5.dp, com.example.ui.theme.GeoSecondary, RoundedCornerShape(20.dp))
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(if (!isNumbersMode) com.example.ui.theme.GeoPrimary else Color.Transparent)
+                    .clickable { viewModel.toggleNumbersMode(false) }
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "🔤 Alphabet",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = if (!isNumbersMode) Color.White else com.example.ui.theme.GeoMuted
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(if (isNumbersMode) Color(0xFF8338EC) else Color.Transparent)
+                    .clickable { viewModel.toggleNumbersMode(true) }
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "🌌 Cosmic Numbers",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = if (isNumbersMode) Color.White else com.example.ui.theme.GeoMuted
+                )
+            }
+        }
+
+        // Horizontal items slider
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
-            items(LetterTemplates.list) { item ->
+            items(activeList) { item ->
                 val isCurrent = item.char == selectedLetter.char
                 val progress = progressMap[item.char.toString()]
                 val starCount = progress?.stars ?: 0
@@ -256,7 +305,7 @@ fun TraceTabContent(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "${item.char}${item.char.lowercase()}",
+                            text = if (isNumbersMode) "${item.char}" else "${item.char}${item.char.lowercase()}",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Black,
                             color = if (isCurrent) Color.White else com.example.ui.theme.GeoOnBg
@@ -279,14 +328,14 @@ fun TraceTabContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
-        // Active animal mascot card
+        // Active animal/cosmic mascot card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp),
-            shape = RoundedCornerShape(28.dp),
+            shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.GeoTertiary),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             border = BorderStroke(1.dp, com.example.ui.theme.GeoSecondary)
@@ -294,30 +343,31 @@ fun TraceTabContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(14.dp),
+                    .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(60.dp)
                         .background(Color.White, RoundedCornerShape(16.dp))
                         .shadow(1.dp, shape = RoundedCornerShape(16.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = selectedLetter.animalEmoji, fontSize = 36.sp)
+                    Text(text = selectedLetter.animalEmoji, fontSize = 34.sp)
                 }
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(14.dp))
                 Column {
                     Text(
-                        text = "${selectedLetter.char} is for ${selectedLetter.animalName}!",
-                        fontSize = 18.sp,
+                        text = if (isNumbersMode) "${selectedLetter.char} is ${selectedLetter.animalName}!" else "${selectedLetter.char} is for ${selectedLetter.animalName}!",
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = com.example.ui.theme.GeoPrimary
+                        color = if (isNumbersMode) Color(0xFF8338EC) else com.example.ui.theme.GeoPrimary
                     )
                     Text(
                         text = selectedLetter.animalFact,
-                        fontSize = 12.sp,
-                        color = com.example.ui.theme.GeoMuted
+                        fontSize = 11.sp,
+                        color = com.example.ui.theme.GeoMuted,
+                        lineHeight = 14.sp
                     )
                 }
             }
@@ -325,54 +375,72 @@ fun TraceTabContent(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Toggle tracing mode (Capital Letter vs Small Letter)
-        Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
-                .background(com.example.ui.theme.GeoTertiary)
-                .border(1.dp, com.example.ui.theme.GeoSecondary, RoundedCornerShape(16.dp))
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = { viewModel.toggleUppercaseMode(true) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isUppercaseMode) com.example.ui.theme.GeoPrimary else Color.Transparent,
-                    contentColor = if (isUppercaseMode) Color.White else com.example.ui.theme.GeoMuted
-                ),
-                shape = RoundedCornerShape(12.dp),
-                elevation = null,
-                modifier = Modifier.testTag("toggle_uppercase")
+        // Small/Capital toggle bar ONLY if in Alphabet mode, otherwise show space badge
+        if (!isNumbersMode) {
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(com.example.ui.theme.GeoTertiary)
+                    .border(1.dp, com.example.ui.theme.GeoSecondary, RoundedCornerShape(16.dp))
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Capital: ${selectedLetter.char}", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Button(
+                    onClick = { viewModel.toggleUppercaseMode(true) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isUppercaseMode) com.example.ui.theme.GeoPrimary else Color.Transparent,
+                        contentColor = if (isUppercaseMode) Color.White else com.example.ui.theme.GeoMuted
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = null,
+                    modifier = Modifier.testTag("toggle_uppercase")
+                ) {
+                    Text("Capital: ${selectedLetter.char}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Button(
+                    onClick = { viewModel.toggleUppercaseMode(false) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (!isUppercaseMode) com.example.ui.theme.GeoPrimary else Color.Transparent,
+                        contentColor = if (!isUppercaseMode) Color.White else com.example.ui.theme.GeoMuted
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = null,
+                    modifier = Modifier.testTag("toggle_lowercase")
+                ) {
+                    Text("Small: ${selectedLetter.char.lowercase()}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
             }
-            Spacer(modifier = Modifier.width(4.dp))
-            Button(
-                onClick = { viewModel.toggleUppercaseMode(false) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (!isUppercaseMode) com.example.ui.theme.GeoPrimary else Color.Transparent,
-                    contentColor = if (!isUppercaseMode) Color.White else com.example.ui.theme.GeoMuted
-                ),
-                shape = RoundedCornerShape(12.dp),
-                elevation = null,
-                modifier = Modifier.testTag("toggle_lowercase")
+        } else {
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .border(1.dp, Color(0xFF8338EC).copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                    .background(Color(0xFF8338EC).copy(alpha = 0.1f))
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Small: ${selectedLetter.char.lowercase()}", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(
+                    text = "🌌 Cosmic Drawing Engine Activated!",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 12.sp,
+                    color = Color(0xFFC084FC)
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Tracing Board Canvas Box
+        // Tracing Board Canvas Box (Changes border/theme dynamically when in Space Numbers mode!)
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(bottom = 12.dp)
                 .shadow(12.dp, shape = RoundedCornerShape(28.dp))
-                .border(4.dp, com.example.ui.theme.GeoPrimary, RoundedCornerShape(28.dp))
-                .background(Color(0xFF1E3F20), RoundedCornerShape(28.dp)), // Deep forest green chalkboard
+                .border(4.dp, if (isNumbersMode) Color(0xFF8338EC) else com.example.ui.theme.GeoPrimary, RoundedCornerShape(28.dp))
+                .background(if (isNumbersMode) Color(0xFF0C091A) else Color(0xFF1E3F20), RoundedCornerShape(28.dp)),
             contentAlignment = Alignment.Center
         ) {
             TracingCanvas(viewModel = viewModel)
@@ -385,7 +453,7 @@ fun TraceTabContent(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(24.dp)),
+                        .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(24.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -394,15 +462,15 @@ fun TraceTabContent(
                         modifier = Modifier.padding(24.dp)
                     ) {
                         Text(
-                            text = "⭐️ STUPENDOUS! ⭐️",
-                            fontSize = 32.sp,
+                            text = if (isNumbersMode) "🌌 COSMIC GLOW MASTER! 🌌" else "⭐️ STUPENDOUS! ⭐️",
+                            fontSize = 28.sp,
                             fontWeight = FontWeight.Black,
-                            color = com.example.ui.theme.GeoTertiary,
+                            color = if (isNumbersMode) Color(0xFFC084FC) else com.example.ui.theme.GeoTertiary,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "You completed '${if (isUppercaseMode) selectedLetter.char else selectedLetter.char.lowercase()}'!",
+                            text = if (isNumbersMode) "You unlocked the secret of '${selectedLetter.char}'!" else "You completed '${if (isUppercaseMode) selectedLetter.char else selectedLetter.char.lowercase()}'!",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -441,17 +509,17 @@ fun TraceTabContent(
                             }
                             Button(
                                 onClick = {
-                                    // Move to next letter automatically
-                                    val currentIdx = LetterTemplates.list.indexOf(selectedLetter)
-                                    val nextIdx = (currentIdx + 1) % LetterTemplates.list.size
-                                    viewModel.selectLetter(LetterTemplates.list[nextIdx])
+                                    // Move to next automatically
+                                    val currentIdx = activeList.indexOf(selectedLetter)
+                                    val nextIdx = (currentIdx + 1) % activeList.size
+                                    viewModel.selectLetter(activeList[nextIdx])
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = com.example.ui.theme.GeoPrimary),
+                                colors = ButtonDefaults.buttonColors(containerColor = if (isNumbersMode) Color(0xFF8338EC) else com.example.ui.theme.GeoPrimary),
                                 shape = RoundedCornerShape(16.dp),
                                 modifier = Modifier.testTag("next_letter_button")
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Next Letter", fontWeight = FontWeight.Bold)
+                                    Text(if (isNumbersMode) "Next Number" else "Next Letter", fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Icon(Icons.Filled.ArrowForward, contentDescription = null)
                                 }
@@ -468,6 +536,7 @@ fun TraceTabContent(
 fun TracingCanvas(viewModel: LetterViewModel) {
     val activeLetter by viewModel.selectedLetter.collectAsState()
     val isUppercaseMode by viewModel.isUppercaseMode.collectAsState()
+    val isNumbersMode by viewModel.isNumbersMode.collectAsState()
     
     val currentStrokeIndex by viewModel.currentStrokeIndex.collectAsState()
     val currentPointIndex by viewModel.currentPointIndex.collectAsState()
@@ -518,6 +587,24 @@ fun TracingCanvas(viewModel: LetterViewModel) {
         ) {
             canvasWidth = size.width
             canvasHeight = size.height
+
+            // Spark starfield constellation backdrop for numbers mode!
+            if (isNumbersMode) {
+                val starPositions = listOf(
+                    Offset(0.12f, 0.18f), Offset(0.88f, 0.15f), Offset(0.2f, 0.78f),
+                    Offset(0.8f, 0.84f), Offset(0.51f, 0.08f), Offset(0.15f, 0.52f),
+                    Offset(0.85f, 0.45f), Offset(0.35f, 0.92f), Offset(0.65f, 0.9f)
+                )
+                starPositions.forEachIndexed { idx, point ->
+                    val opacity = 0.35f + 0.35f * kotlin.math.sin((idx * 40f + pulsingScale * 0.25f).toDouble()).toFloat()
+                    val starRadius = if (idx % 2 == 0) 5.dp.toPx() else 3.dp.toPx()
+                    drawCircle(
+                        color = Color(0xFFA5B4FC).copy(alpha = opacity), // Light cosmic lavender-violet
+                        radius = starRadius,
+                        center = Offset(point.x * canvasWidth, point.y * canvasHeight)
+                    )
+                }
+            }
 
             // 1. Draw ALL template strokes of the current letter as dotted gray outlines underneath
             activeStrokes.forEachIndexed { sIdx, stroke ->
@@ -1066,6 +1153,16 @@ fun StickersTabContent(
     progressMap: Map<String, com.example.data.database.LetterProgress>
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
+    var isNumbersModeInBook by remember { mutableStateOf(false) }
+
+    val activeList = if (isNumbersModeInBook) LetterTemplates.numberList else LetterTemplates.list
+    val totalCount = if (isNumbersModeInBook) 10 else 26
+
+    val masteredCount = remember(progressMap, isNumbersModeInBook) {
+        progressMap.values.count { p ->
+            activeList.any { it.char.toString() == p.letter } && p.uppercaseTraced && p.lowercaseTraced
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -1073,11 +1170,53 @@ fun StickersTabContent(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Stats Banner
-        val masteredLettersCount = remember(progressMap) {
-            progressMap.values.count { it.uppercaseTraced && it.lowercaseTraced }
+        // Category switcher for the Sticker Book
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(com.example.ui.theme.GeoTertiary)
+                .border(1.dp, com.example.ui.theme.GeoSecondary, RoundedCornerShape(16.dp))
+                .padding(2.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (!isNumbersModeInBook) com.example.ui.theme.GeoPrimary else Color.Transparent)
+                    .clickable { isNumbersModeInBook = false }
+                    .padding(vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "🔤 Alphabet Stickers",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = if (!isNumbersModeInBook) Color.White else com.example.ui.theme.GeoMuted
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (isNumbersModeInBook) Color(0xFF8338EC) else Color.Transparent)
+                    .clickable { isNumbersModeInBook = true }
+                    .padding(vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "🌌 Cosmic Stickers",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = if (isNumbersModeInBook) Color.White else com.example.ui.theme.GeoMuted
+                )
+            }
         }
 
+        // Stats Banner
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.GeoTertiary),
@@ -1097,33 +1236,33 @@ fun StickersTabContent(
                         text = "My Sticker Book",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = com.example.ui.theme.GeoPrimary
+                        color = if (isNumbersModeInBook) Color(0xFF8338EC) else com.example.ui.theme.GeoPrimary
                     )
                     Text(
-                        text = "Master letter pairs to unlock stickers!",
+                        text = if (isNumbersModeInBook) "Trace cosmic numbers to unlock space stickers!" else "Master letter pairs to unlock stickers!",
                         fontSize = 11.sp,
                         color = com.example.ui.theme.GeoMuted
                     )
                 }
                 Text(
-                    text = "$masteredLettersCount / 26 🏆",
+                    text = "$masteredCount / $totalCount 🏆",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = com.example.ui.theme.GeoPrimary
+                    color = if (isNumbersModeInBook) Color(0xFF8338EC) else com.example.ui.theme.GeoPrimary
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Grid of 26 letters (unlocked vs locked stickers)
+        // Grid of items (unlocked vs locked stickers)
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.weight(1f)
         ) {
-            items(LetterTemplates.list) { item ->
+            items(activeList) { item ->
                 val progress = progressMap[item.char.toString()]
                 val isUnlocked = progress != null && (progress.uppercaseTraced || progress.lowercaseTraced)
                 val isFullyMastered = progress != null && progress.uppercaseTraced && progress.lowercaseTraced
@@ -1139,7 +1278,9 @@ fun StickersTabContent(
                     elevation = CardDefaults.cardElevation(defaultElevation = if (isUnlocked) 2.dp else 0.dp),
                     border = BorderStroke(
                         width = if (isFullyMastered) 3.dp else 1.dp,
-                        color = if (isFullyMastered) com.example.ui.theme.GeoPrimary else com.example.ui.theme.GeoSecondary
+                        color = if (isFullyMastered) {
+                            if (isNumbersModeInBook) Color(0xFF8338EC) else com.example.ui.theme.GeoPrimary
+                        } else com.example.ui.theme.GeoSecondary
                     )
                 ) {
                     Column(
@@ -1150,7 +1291,7 @@ fun StickersTabContent(
                         verticalArrangement = Arrangement.Center
                     ) {
                         if (isUnlocked) {
-                            // Display beautiful unlocked animal mascot sticker!
+                            // Display beautiful unlocked mascot sticker!
                             Text(text = item.animalEmoji, fontSize = 42.sp)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
@@ -1162,10 +1303,10 @@ fun StickersTabContent(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "${item.char}${item.char.lowercase()}",
+                                text = if (isNumbersModeInBook) "${item.char}" else "${item.char}${item.char.lowercase()}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = com.example.ui.theme.GeoPrimary
+                                color = if (isNumbersModeInBook) Color(0xFF8338EC) else com.example.ui.theme.GeoPrimary
                             )
                             // Star rate indicators
                             Row {
@@ -1188,7 +1329,7 @@ fun StickersTabContent(
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "${item.char} ${item.char.lowercase()}",
+                                text = if (isNumbersModeInBook) "${item.char}" else "${item.char} ${item.char.lowercase()}",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = com.example.ui.theme.GeoMuted
