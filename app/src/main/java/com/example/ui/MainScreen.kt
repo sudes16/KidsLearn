@@ -17,12 +17,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
@@ -47,13 +51,15 @@ import com.example.ui.viewmodel.LetterViewModel
 import com.example.ui.viewmodel.FeedState
 import com.example.ui.viewmodel.PopState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 
 enum class AppTab(val icon: String, val label: String) {
-    TRACE("✏️", "Trace & Learn"),
-    FEED("🍲", "Feed Safari"),
+    TRACE("✏️", "Trace"),
+    MATCH("🤝", "Match"),
+    FEED("🍲", "Feed Androids" /* Feed Safari */),
     BALLOON("🎈", "Balloon Pop"),
     STICKERS("🏆", "Stickers")
 }
@@ -93,12 +99,13 @@ fun MainScreen(
             AnimatedContent(
                 targetState = activeTab,
                 transitionSpec = {
-                    fadeIn(animationSpec = tween(220)) with fadeOut(animationSpec = tween(220))
+                    fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(220))
                 },
                 modifier = Modifier.weight(1f)
             ) { tab ->
                 when (tab) {
                     AppTab.TRACE -> TraceTabContent(viewModel, progressMap)
+                    AppTab.MATCH -> MatchTabContent(viewModel)
                     AppTab.FEED -> FeedTabContent(viewModel)
                     AppTab.BALLOON -> BalloonTabContent(viewModel)
                     AppTab.STICKERS -> StickersTabContent(viewModel, progressMap)
@@ -217,6 +224,7 @@ fun TraceTabContent(
     val starsCount = currentProgress?.stars ?: 0
 
     val activeList = if (isNumbersMode) LetterTemplates.numberList else LetterTemplates.list
+    var showAlphabetMap by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -267,6 +275,92 @@ fun TraceTabContent(
                     fontSize = 13.sp,
                     color = if (isNumbersMode) Color.White else com.example.ui.theme.GeoMuted
                 )
+            }
+        }
+
+        // Show toggleable capital to small map
+        if (!isNumbersMode) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = { showAlphabetMap = !showAlphabetMap },
+                    colors = ButtonDefaults.textButtonColors(contentColor = com.example.ui.theme.GeoPrimary),
+                    modifier = Modifier.testTag("toggle_alphabet_map_button")
+                ) {
+                    Icon(
+                        imageVector = if (showAlphabetMap) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (showAlphabetMap) "Hide Alphabet Pair Map" else "Show Alphabet Pair Map 📖",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+            AnimatedVisibility(visible = showAlphabetMap) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.GeoTertiary.copy(alpha = 0.5f)),
+                    border = BorderStroke(1.dp, com.example.ui.theme.GeoSecondary.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "Alphabet Capital to Small Letter Map",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = com.example.ui.theme.GeoOnBg,
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(vertical = 4.dp)
+                        ) {
+                            items(LetterTemplates.list) { item ->
+                                val isCurrent = item.char == selectedLetter.char
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isCurrent) com.example.ui.theme.GeoPrimary else Color.White)
+                                        .border(1.dp, com.example.ui.theme.GeoSecondary, RoundedCornerShape(8.dp))
+                                        .clickable { viewModel.selectLetter(item) }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "${item.char}",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = if (isCurrent) Color.White else com.example.ui.theme.GeoOnBg
+                                        )
+                                        Text(
+                                            text = "➔",
+                                            fontSize = 10.sp,
+                                            color = if (isCurrent) Color.White.copy(alpha = 0.8f) else com.example.ui.theme.GeoMuted,
+                                            modifier = Modifier.padding(horizontal = 4.dp)
+                                        )
+                                        Text(
+                                            text = "${item.char.lowercaseChar()}",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isCurrent) Color.White else com.example.ui.theme.GeoPrimary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -369,6 +463,40 @@ fun TraceTabContent(
                         color = com.example.ui.theme.GeoMuted,
                         lineHeight = 14.sp
                     )
+                    if (!isNumbersMode) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "Alphabet pair: ",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = com.example.ui.theme.GeoOnBg.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = "${selectedLetter.char}",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black,
+                                color = com.example.ui.theme.GeoPrimary
+                            )
+                            Text(
+                                text = " ➔ ",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = com.example.ui.theme.GeoMuted
+                            )
+                            Text(
+                                text = "${selectedLetter.char.lowercaseChar()}",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black,
+                                color = com.example.ui.theme.GeoPrimary
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -470,7 +598,13 @@ fun TraceTabContent(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (isNumbersMode) "You unlocked the secret of '${selectedLetter.char}'!" else "You completed '${if (isUppercaseMode) selectedLetter.char else selectedLetter.char.lowercase()}'!",
+                            text = if (isNumbersMode) {
+                                "You unlocked the secret of '${selectedLetter.char}'!"
+                            } else if (isUppercaseMode) {
+                                "You completed Capital '${selectedLetter.char}'!\nNow let's trace Small '${selectedLetter.char.lowercase()}'!"
+                            } else {
+                                "You completed Small '${selectedLetter.char.lowercase()}'!"
+                            },
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -507,21 +641,34 @@ fun TraceTabContent(
                                     Text("Try Again", fontWeight = FontWeight.Bold)
                                 }
                             }
+
+                            val nextButtonText = when {
+                                isNumbersMode -> "Next Number"
+                                isUppercaseMode -> "Trace Small: ${selectedLetter.char.lowercase()}"
+                                else -> "Next Letter"
+                            }
                             Button(
                                 onClick = {
-                                    // Move to next automatically
-                                    val currentIdx = activeList.indexOf(selectedLetter)
-                                    val nextIdx = (currentIdx + 1) % activeList.size
-                                    viewModel.selectLetter(activeList[nextIdx])
+                                    if (!isNumbersMode && isUppercaseMode) {
+                                        viewModel.toggleUppercaseMode(false)
+                                    } else {
+                                        // Move to next automatically
+                                        val currentIdx = activeList.indexOf(selectedLetter)
+                                        val nextIdx = (currentIdx + 1) % activeList.size
+                                        viewModel.selectLetter(activeList[nextIdx])
+                                        if (!isNumbersMode) {
+                                            viewModel.toggleUppercaseMode(true)
+                                        }
+                                    }
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = if (isNumbersMode) Color(0xFF8338EC) else com.example.ui.theme.GeoPrimary),
                                 shape = RoundedCornerShape(16.dp),
                                 modifier = Modifier.testTag("next_letter_button")
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(if (isNumbersMode) "Next Number" else "Next Letter", fontWeight = FontWeight.Bold)
+                                    Text(nextButtonText, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Icon(Icons.Filled.ArrowForward, contentDescription = null)
+                                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
                                 }
                             }
                         }
@@ -563,13 +710,18 @@ fun TracingCanvas(viewModel: LetterViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(isUppercaseMode, activeLetter, traceCompleted) {
+            .onSizeChanged { size ->
+                canvasWidth = size.width.toFloat()
+                canvasHeight = size.height.toFloat()
+            }
+            .pointerInput(isUppercaseMode, activeLetter, traceCompleted, canvasWidth, canvasHeight) {
                 detectDragGestures(
                     onDragStart = { offset ->
                         viewModel.onTracingTouch(offset, canvasWidth, canvasHeight)
                     },
                     onDrag = { change, _ ->
                         viewModel.onTracingTouch(change.position, canvasWidth, canvasHeight)
+                        change.consume()
                     },
                     onDragEnd = {
                         viewModel.onTracingTouchEnded()
@@ -585,8 +737,6 @@ fun TracingCanvas(viewModel: LetterViewModel) {
                 .fillMaxSize()
                 .testTag("interactive_chalkboard_canvas")
         ) {
-            canvasWidth = size.width
-            canvasHeight = size.height
 
             // Spark starfield constellation backdrop for numbers mode!
             if (isNumbersMode) {
@@ -1453,6 +1603,471 @@ fun ConfettiBurst(active: Boolean) {
                 radius = p.radius,
                 center = Offset(px, py)
             )
+        }
+    }
+}
+
+// ------------------- TRACE COLUMN MATCHING GAME FOR TODDLERS -------------------
+
+@Composable
+fun MatchTabContent(viewModel: LetterViewModel) {
+    var roundCode by remember { mutableStateOf(1) }
+    
+    // Select 3 random letters from LetterTemplates.list for matching round
+    val activeLetters = remember(roundCode) {
+        LetterTemplates.list.shuffled().take(3)
+    }
+    
+    // Shuffle the right side cards to create a scrambling effect
+    val shuffledRightLetters = remember(activeLetters) {
+        activeLetters.shuffled()
+    }
+
+    // Capture dot positions
+    val leftPositions = remember { mutableStateMapOf<Char, Offset>() }
+    val rightPositions = remember { mutableStateMapOf<Char, Offset>() }
+    
+    // Track matched pairs: LeftChar -> RightChar
+    val matchedPairs = remember { mutableStateMapOf<Char, Char>() }
+    
+    // Drag session variables
+    var activeDragChar by remember { mutableStateOf<Char?>(null) }
+    var activeDragPosition by remember { mutableStateOf<Offset?>(null) }
+    
+    // Display feedback message
+    var feedbackMessage by remember { mutableStateOf("Match the big letters to the small letters! 🎨") }
+    
+    // Track if completed
+    val isRoundComplete = matchedPairs.size == 3
+    
+    var containerCoordinates by remember { mutableStateOf<androidx.compose.ui.layout.LayoutCoordinates?>(null) }
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Pulsing circle scale for visual cues
+    val infiniteTransition = rememberInfiniteTransition()
+    val pulsingScale by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Round Indicator & Game Title
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp)
+                .shadow(4.dp, RoundedCornerShape(16.dp)),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = BorderStroke(2.dp, com.example.ui.theme.GeoSecondary)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Letter Pair Matching Game! 🤝",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Black,
+                    color = com.example.ui.theme.GeoPrimary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = feedbackMessage,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = com.example.ui.theme.GeoOnBg.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        // Matching Area Box
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
+                .border(2.dp, com.example.ui.theme.GeoSecondary.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
+                .onGloballyPositioned { containerCoordinates = it }
+        ) {
+            
+            // Connecting Lines Canvas
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("matching_canvas")
+            ) {
+                // 1. Draw already matched lines
+                matchedPairs.forEach { (lChar, rChar) ->
+                    val start = leftPositions[lChar]
+                    val end = rightPositions[rChar]
+                    if (start != null && end != null) {
+                        drawLine(
+                            color = Color(0xFF10B981), // Cute leafy green
+                            start = start,
+                            end = end,
+                            strokeWidth = 12.dp.toPx(),
+                            cap = StrokeCap.Round
+                        )
+                        // Sparkle node circles on ends
+                        drawCircle(
+                            color = Color(0xFF047857),
+                            radius = 6.dp.toPx(),
+                            center = start
+                        )
+                        drawCircle(
+                            color = Color(0xFF047857),
+                            radius = 6.dp.toPx(),
+                            center = end
+                        )
+                    }
+                }
+
+                // 2. Draw currently dragging line
+                val dragChar = activeDragChar
+                val dragPos = activeDragPosition
+                if (dragChar != null && dragPos != null) {
+                    val start = leftPositions[dragChar]
+                    if (start != null) {
+                        // Rainbow active trace color
+                        drawLine(
+                            color = com.example.ui.theme.GeoPrimary,
+                            start = start,
+                            end = dragPos,
+                            strokeWidth = 10.dp.toPx(),
+                            cap = StrokeCap.Round,
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(20f, 15f), 0f)
+                        )
+                        // Glowing pencil drawing point
+                        drawCircle(
+                            color = com.example.ui.theme.GeoSecondary,
+                            radius = 12.dp.toPx(),
+                            center = dragPos
+                        )
+                    }
+                }
+            }
+
+            // Columns layout for Cards
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Left Column (Capital Letters)
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(1f),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    activeLetters.forEach { letterItem ->
+                        val isMatched = matchedPairs.containsKey(letterItem.char)
+                        
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth(0.95f)
+                        ) {
+                            // Large Left Card
+                            Card(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(100.dp)
+                                    .shadow(if (isMatched) 1.dp else 4.dp, RoundedCornerShape(16.dp))
+                                    .pointerInput(letterItem.char, isMatched) {
+                                        if (isMatched) return@pointerInput
+                                        detectDragGestures(
+                                            onDragStart = { offset ->
+                                                val startOffset = leftPositions[letterItem.char]
+                                                if (startOffset != null) {
+                                                    activeDragChar = letterItem.char
+                                                    activeDragPosition = startOffset
+                                                }
+                                            },
+                                            onDrag = { change, dragAmount ->
+                                                change.consume()
+                                                activeDragPosition = (activeDragPosition ?: Offset.Zero) + dragAmount
+                                            },
+                                            onDragEnd = {
+                                                val dragPos = activeDragPosition
+                                                if (dragPos != null) {
+                                                    var correctMatchFound = false
+                                                    var anyTargetNodeFoundPos: Char? = null
+                                                    
+                                                    // Find if dragging dropped close to any right node
+                                                    rightPositions.forEach { (rChar, rPos) ->
+                                                        val dist = (dragPos - rPos).getDistance()
+                                                        if (dist < 80.dp.toPx()) {
+                                                            anyTargetNodeFoundPos = rChar
+                                                        }
+                                                    }
+
+                                                    if (anyTargetNodeFoundPos != null) {
+                                                        val target = anyTargetNodeFoundPos!!
+                                                        if (target == letterItem.char) {
+                                                            // Correct Match!
+                                                            matchedPairs[letterItem.char] = target
+                                                            feedbackMessage = "Wow! MATCHED ${letterItem.char} to ${letterItem.char.lowercaseChar()}! 🎉"
+                                                            correctMatchFound = true
+                                                            
+                                                            // Sync with DB
+                                                            coroutineScope.launch {
+                                                                viewModel.selectLetter(letterItem)
+                                                            }
+                                                        } else {
+                                                            feedbackMessage = "Oops! Let's match Capital ${letterItem.char} with Small ${letterItem.char.lowercaseChar()}! 😊"
+                                                        }
+                                                    }
+                                                }
+                                                activeDragChar = null
+                                                activeDragPosition = null
+                                            },
+                                            onDragCancel = {
+                                                activeDragChar = null
+                                                activeDragPosition = null
+                                            }
+                                        )
+                                    },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isMatched) Color(0xE0E2F1E8) else Color.White
+                                ),
+                                border = BorderStroke(
+                                    width = if (isMatched) 1.dp else 3.dp,
+                                    color = if (isMatched) Color(0xFFA7F3D0) else Color(letterItem.themeColor)
+                                )
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = "${letterItem.char}",
+                                            fontSize = 32.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = if (isMatched) Color(0xFF10B981) else com.example.ui.theme.GeoOnBg
+                                        )
+                                        Text(
+                                            text = letterItem.animalEmoji,
+                                            fontSize = 24.sp
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Glowing plug node
+                            Box(
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (isMatched) Color(0xFF10B981)
+                                        else Color(letterItem.themeColor)
+                                    )
+                                    .border(
+                                        width = if (!isMatched && activeDragChar == letterItem.char) 3.dp else 1.dp,
+                                        color = Color.White,
+                                        shape = CircleShape
+                                    )
+                                    .onGloballyPositioned { dotCoordinates ->
+                                        containerCoordinates?.let { parent ->
+                                            val position = parent.localPositionOf(dotCoordinates, Offset.Zero)
+                                            val dotCenter = position + Offset(
+                                                density.run { 12.dp.toPx() },
+                                                density.run { 12.dp.toPx() }
+                                            )
+                                            leftPositions[letterItem.char] = dotCenter
+                                        }
+                                    }
+                            ) {
+                                if (!isMatched && matchedPairs.size < 3 && activeDragChar == null && matchedPairs.size == activeLetters.indexOf(letterItem)) {
+                                    // Soft golden ring helper pulse around the next match
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .scale(pulsingScale)
+                                            .border(2.dp, Color(0xFFFBBF24), CircleShape)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Right Column (Small Letters Column)
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(1f),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.End
+                ) {
+                    shuffledRightLetters.forEach { letterItem ->
+                        val isMatched = matchedPairs.values.contains(letterItem.char)
+                        
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth(0.95f)
+                        ) {
+                            // Glowing Socket node
+                            Box(
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (isMatched) Color(0xFF10B981)
+                                        else Color(letterItem.themeColor).copy(alpha = 0.8f)
+                                    )
+                                    .border(1.dp, Color.White, CircleShape)
+                                    .onGloballyPositioned { dotCoordinates ->
+                                        containerCoordinates?.let { parent ->
+                                            val position = parent.localPositionOf(dotCoordinates, Offset.Zero)
+                                            val dotCenter = position + Offset(
+                                                density.run { 12.dp.toPx() },
+                                                density.run { 12.dp.toPx() }
+                                            )
+                                            rightPositions[letterItem.char] = dotCenter
+                                        }
+                                    }
+                            )
+
+                            // Large Right matching Partner Card
+                            Card(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(100.dp)
+                                    .shadow(if (isMatched) 1.dp else 3.dp, RoundedCornerShape(16.dp)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isMatched) Color(0xE0E2F1E8) else Color.White
+                                ),
+                                border = BorderStroke(
+                                    width = if (isMatched) 1.dp else 2.dp,
+                                    color = if (isMatched) Color(0xFFA7F3D0) else com.example.ui.theme.GeoSecondary
+                                )
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = "${letterItem.char.lowercaseChar()}",
+                                            fontSize = 32.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = if (isMatched) Color(0xFF059669) else com.example.ui.theme.GeoPrimary
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = letterItem.animalName,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = com.example.ui.theme.GeoMuted
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Confetti Overlay
+            ConfettiBurst(active = isRoundComplete)
+        }
+
+        // Action controls / Score and rewards
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (isRoundComplete) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF34D399)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Super Job! 🌟",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "You connected all pairs!",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            matchedPairs.clear()
+                            roundCode += 1
+                            feedbackMessage = "Match the big letters to the small letters! 🎨"
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "Next Match! ➔",
+                            color = Color(0xFF10B981),
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    onClick = {
+                        matchedPairs.clear()
+                        roundCode += 1
+                        feedbackMessage = "New letters shuffled! ✨"
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    border = BorderStroke(2.dp, com.example.ui.theme.GeoSecondary),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        tint = com.example.ui.theme.GeoPrimary
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Shuffle Letters 🎲",
+                        color = com.example.ui.theme.GeoPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }
